@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mentalist - CBI Archives & Streams</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        mentalist: {
+                            dark: '#0a0b0e',
+                            card: '#12141c',
+                            border: '#222634',
+                            gold: '#d4af37',
+                            goldHover: '#e5c158',
+                            accent: '#8b0000', // Red John blood accent
+                            muted: '#94a3b8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar and animations */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0b0e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #222634;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+        .glow-gold {
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.15);
+        }
+        .glow-red {
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.25);
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-mentalist-dark text-slate-100 font-sans min-h-screen selection:bg-mentalist-gold selection:text-black antialiased">
+
+    <header class="sticky top-0 z-50 bg-mentalist-dark/90 backdrop-blur-md border-b border-mentalist-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('browse')">
+                <div class="w-10 h-10 rounded-full bg-mentalist-card border border-mentalist-gold flex items-center justify-center text-mentalist-gold text-lg font-serif">
+                    ♠
+                </div>
+                <div>
+                    <h1 class="font-serif text-xl tracking-wider text-white font-bold">THE MENTALIST</h1>
+                    <p class="text-xs text-mentalist-muted tracking-widest uppercase">CBI Archives • Patrick Jane Collection</p>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center space-x-6">
+                <button onclick="switchTab('browse')" id="nav-browse" class="text-sm font-medium text-mentalist-gold transition hover:text-mentalist-goldHover flex items-center gap-2">
+                    <i class="fa-solid fa-film"></i> Episodes
+                </button>
+                <button onclick="switchTab('watchlist')" id="nav-watchlist" class="text-sm font-medium text-mentalist-muted transition hover:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-bookmark"></i> Watchlist (<span id="watchlist-count">0</span>)
+                </button>
+                <button onclick="switchTab('tea')" id="nav-tea" class="text-sm font-medium text-mentalist-muted transition hover:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-mug-hot"></i> Jane's Tea Room
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="relative hidden sm:block">
+                    <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Search episodes..." class="bg-mentalist-card border border-mentalist-border text-xs rounded-full py-2 pl-9 pr-4 text-white focus:outline-none focus:border-mentalist-gold w-48 lg:w-64 transition">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-mentalist-muted"></i>
+                </div>
+                <button onclick="openRandomEpisode()" class="bg-mentalist-card border border-mentalist-gold/40 text-mentalist-gold hover:bg-mentalist-gold hover:text-black p-2 rounded-full transition text-xs flex items-center gap-1.5 px-3 font-medium">
+                    <i class="fa-solid fa-dice"></i> <span class="hidden sm:inline">Surprise Me</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- TAB 1: BROWSE SEASONS & EPISODES -->
+        <div id="tab-browse" class="space-y-8">
+            <!-- Hero Banner -->
+            <div class="relative rounded-2xl overflow-hidden border border-mentalist-border bg-gradient-to-r from-mentalist-card via-mentalist-dark to-mentalist-card p-8 md:p-12 glow-gold">
+                <div class="absolute right-0 top-0 bottom-0 w-1/3 opacity-10 bg-no-repeat bg-cover pointer-events-none" style="background-image: url('https://placehold.co/600x600/12141c/d4af37?text=Mentalist');"></div>
+                <div class="relative z-10 max-w-2xl space-y-4">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mentalist-gold/10 border border-mentalist-gold/30 text-mentalist-gold text-xs font-semibold tracking-wide uppercase">
+                        <i class="fa-solid fa-shield-halved"></i> California Bureau of Investigation
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-serif font-bold text-white leading-tight">
+                        "The secret is to pay attention to what nobody else notices."
+                    </h2>
+                    <p class="text-mentalist-muted text-sm md:text-base">
+                        Explore all 7 seasons of Patrick Jane’s quest for justice and closure against Red John. Season 1 is fully unlocked and ready to stream with our custom player.
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-4">
+                        <button onclick="playEpisode(1, 1)" class="bg-mentalist-gold text-black font-semibold px-6 py-3 rounded-xl hover:bg-mentalist-goldHover transition flex items-center gap-2 text-sm shadow-lg">
+                            <i class="fa-solid fa-play"></i> Watch S1:E1 Pilot
+                        </button>
+                        <button onclick="scrollToSeasons()" class="bg-mentalist-card border border-mentalist-border text-white px-6 py-3 rounded-xl hover:border-mentalist-gold transition flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-list"></i> Browse All Seasons
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Season Selector Tabs -->
+            <div id="seasons-anchor" class="flex overflow-x-auto pb-2 gap-2 border-b border-mentalist-border">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Season Header & Info -->
+            <div id="season-header" class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-mentalist-card/50 p-6 rounded-xl border border-mentalist-border">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Episode Grid -->
+            <div id="episode-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- TAB 2: WATCHLIST -->
+        <div id="tab-watchlist" class="hidden space-y-6">
+            <div class="border-b border-mentalist-border pb-4">
+                <h2 class="text-2xl font-serif font-bold text-white">Your Saved Watchlist</h2>
+                <p class="text-sm text-mentalist-muted">Episodes you've bookmarked for later investigation.</p>
+            </div>
+            <div id="watchlist-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- TAB 3: JANE'S TEA ROOM (EASTER EGG / AMBIENT) -->
+        <div id="tab-tea" class="hidden max-w-2xl mx-auto py-12 text-center space-y-8">
+            <div class="w-24 h-24 mx-auto rounded-full bg-mentalist-card border-2 border-mentalist-gold flex items-center justify-center text-mentalist-gold text-4xl shadow-xl glow-gold animate-pulse">
+                🍵
+            </div>
+            <div class="space-y-3">
+                <h2 class="text-3xl font-serif font-bold text-white">The Perfect Cup of Chamomile</h2>
+                <p class="text-mentalist-muted text-sm leading-relaxed">
+                    "Tea is a quiet ritual that grounds the mind amidst chaos. Sit back, take a sip, and let Patrick Jane sort out the clues while you enjoy the show."
+                </p>
+            </div>
+            <div class="bg-mentalist-card border border-mentalist-border p-6 rounded-2xl space-y-4">
+                <h3 class="text-mentalist-gold font-serif text-lg">Patrick's Mentalism Quote Generator</h3>
+                <blockquote id="quote-box" class="italic text-slate-300 text-base font-serif">
+                    "I don't believe in psychics. I believe in sharp observation and profound psychological insight."
+                </blockquote>
+                <button onclick="nextQuote()" class="bg-mentalist-dark border border-mentalist-gold/40 text-mentalist-gold hover:bg-mentalist-gold hover:text-black px-4 py-2 rounded-lg text-xs font-medium transition">
+                    Another Observation
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="player-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex flex-col">
+        <!-- Top Bar -->
+        <div class="flex items-center justify-between px-6 py-4 bg-mentalist-card border-b border-mentalist-border">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-mentalist-dark border border-mentalist-gold flex items-center justify-center text-mentalist-gold text-sm font-serif">
+                    ♠
+                </div>
+                <div>
+                    <h3 id="player-ep-title" class="text-white font-serif font-semibold text-sm sm:text-base">Episode Title</h3>
+                    <p id="player-ep-subtitle" class="text-xs text-mentalist-muted">Season 1 • Episode 1</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleDrawer()" class="bg-mentalist-dark border border-mentalist-border hover:border-mentalist-gold text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 transition">
+                    <i class="fa-solid fa-list"><span> Playlist</span></i>
+                </button>
+                <button onclick="closePlayer()" class="bg-mentalist-dark border border-mentalist-border hover:border-mentalist-accent hover:text-mentalist-accent text-white w-9 h-9 rounded-lg flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Player Area + Playlist Drawer -->
+        <div class="flex-1 relative flex overflow-hidden">
+            <!-- Video Container -->
+            <div class="flex-1 flex flex-col items-center justify-center relative bg-black p-2 sm:p-6">
+                <!-- Loading Spinner / Tea Quote Overlay -->
+                <div id="player-loader" class="absolute inset-0 bg-mentalist-dark flex flex-col items-center justify-center z-20 space-y-4">
+                    <div class="w-16 h-16 rounded-full border-2 border-mentalist-gold border-t-transparent animate-spin flex items-center justify-center text-2xl">
+                        🍵
+                    </div>
+                    <p id="loader-quote" class="text-mentalist-gold font-serif text-sm italic max-w-md text-center px-4">
+                        Brewing the case details and securing the video feed...
+                    </p>
+                </div>
+
+                <!-- Custom Player iframe or video wrapper -->
+                <div class="w-full h-full max-w-6xl max-h-[80vh] rounded-xl overflow-hidden border border-mentalist-border shadow-2xl relative bg-black flex items-center justify-center">
+                    <iframe id="video-frame" src="" class="w-full h-full border-0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                </div>
+            </div>
+
+            <!-- Playlist Drawer -->
+            <div id="playlist-drawer" class="w-80 bg-mentalist-card border-l border-mentalist-border flex flex-col transition-all duration-300 absolute right-0 top-0 bottom-0 z-30 translate-x-full lg:translate-x-0 lg:relative">
+                <div class="p-4 border-b border-mentalist-border flex items-center justify-between">
+                    <h4 class="font-serif font-bold text-sm text-white flex items-center gap-2">
+                        <i class="fa-solid fa-film text-mentalist-gold"></i> Season 1 Episodes
+                    </h4>
+                    <button onclick="toggleDrawer()" class="lg:hidden text-mentalist-muted hover:text-white text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="drawer-ep-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Season 1 Direct Links provided by the user
+        const season1Links = {
+            1: "https://fsldownload.com/p/zNSxp7_rhsAi8zg1.GgS2_2D2bM8R9s_iarv8CraoQSN6q14ndFsT_TjhI3teMS5POWKxqijJsaHV_JrQQvb3KsoJBmwGXk1hA5ETNg6HZm1AI1JT2z4Fjxxo1KpFZcntr259FvbOt4kI5JjK2kB6Khpk-ojJFOehSeCXVd6N7qviuapHMOjPG9Y5i-ti-Fk9jzyivCotFOG0yHGNrDegv5ucKKAswJkNB40JLhGdVk2ZVGiqJWrlcS2vhvoKMbb2ZDP_sx-patLkm6F16fLG1PpBcS77gOsuNVHraYzzO4WVBBqLlB-EW3WhB2GiNiOHFdUYG5WX5qInoSyqyiL81mB6rScWrSOVWXj4Wd1oFMsZKRVISN1EKeJWkm3vMoUOtXqBtE2XI_CFuyda.r_W32BvfNz_nUwHKTGAvog",
+            2: "https://fsldownload.com/p/-Ye0K-hHdQsLNbgf.oKhr7wjrDiS1hF-U7siPSHcm4lKyShQf3qGZ5w-DAbQzcUPMeFTA0PVqGnzqPAOEGezI4bHaxwgKjOSa-uBaHrOc575goYBaME7sttU1gN-clFWZWvL0Y3xX6ubSBTDpVHEiXK6J3RWgssZw2H98_DKs5BfpWWU3ZRVdZdP53Dx2aMHzr49V-SuJ8Jr4WnB6hEwScN2xKxfUUSCmWGWxJCfJ9dGlaH87X52pwFF6sss9WJkgAldP3wQop0T60j9eb76d8Cy5HqJ_9GGdn37Nup1abTEMiATjmjrsKnjZQVev_V_F-F6t5EHkHc8twNOUh81rg9a00Jc-ZmLAlGYNW-iMMLuGrk6nH0Vsy719Kz-qW6gWaSnTyxYxIxf0NgmKWpY4udK-WOE.mvAh1XxwRiU2cLF2ABzZfQ",
+            3: "https://fsldownload.com/p/nifCut-kA2UjmxML.LZDvn_clGvZ6fr1e90gzuejoV-sNPdtv6xir_hDtDmubmNZHr7HA4oAB7gO0gE2H2ycXHitOHgAGyyCIOM5wRCgHO8G8rnZmK_f_SO6PiRWe5XTSzyIVDX0vSroz3z0nmjauOBLRFXd9HY90xQ9_S5EJd-k4vliLi0j5yB3WqlExDUNBxiHEcZg2owkIcy4W-xyrKDCyEPr5fZBYDRJ9xmFcTpUWOYH5umyfU0mAKGdrXfqk3H6zqTKKOhL9N3TLoX1gVmrxrVtc3pW_4Pi2wMepsyDmUyor78fROBFn1tlQ7IDr-AyJPOGQ-AfouojQS32lZ2evLMIeUogWEDq50A6lxBmOXXZ9SXesofdWm9QyH3ne8puw3HqTYbqr37lNfnZF0H0J26Q.Ur7KjZhXUv9CUJdGEuqMtQ",
+            4: "https://fsldownload.com/p/nBZSzw9zPQkVlD85.oNWAxp_wzddR5AgN6Imzhj4RF1ZgKCMW5dF1QyZCwcyQdnmUz9s_ua5MdaKBNEbR9vsHCC5q7POKoFGhciMIhejAUSI_2ckgjEnqPgt6sNIuCYahC7C746NX9TsDPInXfASfvgxDxAbCx822jAE7czYjA4niNy0fBFQ3x_o8tV1gM55Dl2yMnsvCnKJ0briNK6YumbXTYahB05-Y8AXyG5Dh2HmMas2qNdvDfaLz_7vIjDsmHycaKQon2RZez-0aAUM6iyg5vLN0eS-nDiFx1WAnwa96zMtgZ8NHK1Nrx9h8zQjfeAht61T3MC3yzIsPwpPN96leo4sQ3QrjCwUzq5BB0LDP9dP8d8WcyAipbgXq84FUhv5og4zpu86cASPj7nKpdJXi_i4.ef75UmuBwbx7HpwiYD6ecA",
+            5: "https://fsldownload.com/p/1IWsOzEybCVQvbxM.GKUOjLa3ZemfvIQTFGMD9gZpAhbLkdirMHuWrAjoEMUDj2UcMq2mlAy8AJJ6qsgmtsQwGPVOvksoq_fpfDy2klIAVd96f-xP-UINS1TBaCDWIdr3iRukbrV9BqwpdRRCmy7PI2q1T6rdwCFbviG4fy1-9snIgzm-JptW-0BBX5cWwntX9q5Q5yx9BN2APOfNIMzKImpxWe_iy-8CNAb4vOaoRs8F33Si6LLHH79DrCUS9O4AyN0zxJd4qkWyZ2K8TBLdVakSklGq0pz5QaGsxw6i2iYSVpCRTlNzJqBynstaKEdihVll58v-wd6TZXITi7iBxCR2OU6wxaQxtWtDXRT2XUv-1qNzxNtzmedqhZNn5NFfrLj8MHaxLv96UJ1_-60EGXM3r3zU.OwktsjdR6jVh59VTz8locQ",
+            6: "https://fsldownload.com/p/M_XC2JWucNbpbDbx.NWFA33QdAL8r8cPDYsOZWEVyRjmAja68AweynDf9dy1sjBSDSxGQvc0LT0BZnWrQ1Naz7mJtBl_WQyBlzNJiz-cJfVljgyUanB3j2BWFBkcQ791V6x8RY98coUZ8b9ahmCqOB56NMcoVUUbKmsILO6aWDud6m6GrEUQFqxNGvlVkSAssvOLGQTnR0KFvVWWZZI8sxh7LbBZaeJAGCULd9ZIoxDG2G1JcH_Tfiy7CvJbBsTJ35KZVojFxJTz8yaxHc1raPye9QWtE3eILXxz30CkPn33K5ZTtiXFeapiQDHar8nOR4O5BuEhdlyHSJpFVLUWV6hPbYx8ul0cW8FsYaoWaKNfncoKYCse3KIu8gL6MN8hbViUb3nI9TBPH4KJNC7PfMkHm7WHJ.QlDX_4fmcHIk4k2A0yzI-A",
+            7: "https://fsldownload.com/p/Aa_ux1MIzuqDOFOA.-maKp3VYiMLWRyEIv3V9h7VdLiZK_bg1Fm0fDDGxlq-hWfje2Y-HGOO4FMh0h6jlgX6rdbirU8eu0E5FZHJZ_g6iel04TwoXx8Zf_ibUz2JmvkPKP26yOm0Roi-R8qrXTU2PGVXt9djyv2vpECljuKe7j-R82Bt9DDBkjodHJJ6WkPTkwFxZkaVVdMRQfN6V8JQj05CxUVmWJz5nc3hsZbVBE7YL4k1_ktNU-XiXF_jmtnSdfKXiNCzd5o51YwLLuE6sMmJBMp8jnihR7pyPhHMXBDpIdgwlcdueyAGdBWVCmqhW_yD1HYqTnyUWXYxB9ic7zceA_M_azXPzXWYaN51oiW9XsTtHoQUREYtyB-ZHmZJujlo_w7iRXY_Kc6mBEP6mhmLeA1L0.rLgauEzIaKP9HHhRRs_z7w",
+            8: "https://fsldownload.com/p/pZJWCOFbb5lsj3Ya.Zu4jAbe8vNXLTJXBIbCIsMCMn_Q6ZQJUl_HhvQicK17R3_aW8wVRppzH6PxVkaZvAb3IoQsiAhW3A3Rv9HJUTviTJ3vHjLtHyRnB5uCkEayezW0zIM8lu7RmfQlFTUETWSY3AwiFX3a5cleoJpqqS3TtP15Nvq4pVbgkbyPx-AHn3Tnux3E6_1AclkyjVvhnVeJk-gCACygFrAzZQVOwWP7_zRkW_v2A3IcmPf_8l2YF7ccSYOiZJ40Y6DHGnjC8ErtTbJ4phuKZ97hMpxeYn1vjrRmtM_MUzFFuCow0EZAzmzhUY6Pq7KIpo9oRce1UywaDzbDF5Q_SuSqW2gEQYaC18gbCn-hOA6u8MfSL1A6xxEem370Ga-iCKDzsZSwvY5iuh3FTrpzR.rvVTVvCHUJDWqI-mhPOsHA",
+            9: "https://fsldownload.com/p/LUl8dBZLMgbn0FSS.ogMzbZ00Khm_AzawJst1HgKQZD8VPvCVTXWVm-WzsjZW_lUk87ZBf3d0yw0KOdjEqnxco6SaVlbsTXgDjShDY49vUudOkcSHMKdCNfTgtfRjGxxLAmnudSljLFixNk0Yqupxr5TbW7Ae1L0q9a2LWkKYCSNhPKCeNCYDqnNvpwXq94usXT8s668J8sFZCJZlprosMs6v5hPw5cw5rw2j_Bd771KdSE0iKKkU0si2WKMF2CMdRAjTM704JQ4PfTuBYWYcIDjcDAzQ3Jrxs8TnRnn3ZcsHE4HP1nhs71NyJcTjb11vcoN5mbCVEO6Mu9ebsarnZbQr0bDygZSRyImYB6ezUOJshAdjxSxVIRZVyd2u_zO4wXuj9mLis8gTQLF3mL4iOyLAuT6O.DEp9r_4EVbQOKIR7GbU0aQ",
+            10: "https://fsldownload.com/p/aPdm9b7JmmzYYRvs.d36rN5wLTZwLUQV1Z0bzhYPDqr6xQ7S2dwaijA-oLVuWfoKCc2SeUaQ0OceBkwq4zUc_-YPo_KGCJ-pGEXgWJ3j8A7sywPbJDlrK0LylvXzO_bRHJoj9puGFVuXHUjLsSkaLBJnNtuc9gbBITiclkLryGondlhKw85slBG4G7xGVMwrDWb18feL8rvUQUc5sL3YfL4K9H-1fIz56ap1468aIFsT6Fs-rCLBhy5dPOMQXIfM4Y6QytK3t8KWTaRUUEqvEaHrxvnkwRBJUdVAAjDNdAKWMQAdbG64RE2bNejvcicKrNZsjCOAv4vhcJC7VF_L9ktQvNxsFQtbKpIMuvHdHnPCenVYiblBp_NTcvjLdisdTRQLM1I4MDzGuL8MIjbPrGG9fed-v.nNtdhSFKv3hEqXHNJblrlQ",
+            11: "https://fsldownload.com/p/BlBgM9cL9WfI8HzA.TrZh7t-L8bmOuGt6rLJnVdjIxAB_QDRkWO0fnieR5MeoEaRyt08mtOXd4j6mo8jYKAzeu5G5xU7TzbLG04kXZnvDEeiZDbpcbge_xdjCq7C_xGHEnvqDTGK08WvgNODMdrwYIkyvuWZE6IGj-Tj7FsYaLZSI8FFlZDZtAs_mJxLpCv2V2Aym5-Ry5OXb-1ct6b4RWyEJ_69iVVxAkGm8VFItMBl26q-wymkmOTvWT2gbuZRfz8hokZ_AO3vLUgKMu2D8fORr1ZrAUO-pjKXKBYv1Wef0CIo5CVhSuD8YA8eNKvMFImkvlRY0xLvMnCM1dioFm6c82Npg7iqwI0Lbvi9l7e1D9R99CjSDcUtUfwn7KSDGKkArYiwR0J2g-MnnCEuFWwSwSgTS.-IcYwMBmIyuensB5RpyrgA",
+            12: "https://fsldownload.com/p/eKXrs9dKn92D8h7P.WkQhNXjPEZ7tK_nTSKNR9mabwwjPixzxQw2ebIVCcjfA6kZdZFBxvgQySfhnlmfx1EOkDgA-wAZeE5VowuZC8U75YQouvtUjaGvg5zeoszuuJlQQRbQGhECoqzxPtrwWdlGiHAQysvvQ1xFCfFrWuCXYQUSFDdSsthwiMNuFEkCuOPhvwxdKnzuRIgVXFCDYAbdHlasfLhb6azaTlb7zaBckyJ6sjq4pxWod1_ultD9AecvXgGGL2cmje1zR0B0HenfHPZhQo7OsImp20YhEvIAsmA7xohcFgyXoSMhOQbZE28_BW2gLbb1LLA_VR3zvNnDTLUsRYY2hSNFQUNd6vqV4ecxXJNB0dyN9o8FnUu0ExomkNZlGt1R5nVqbPevmSU29-_0ZQag5.JfB_8xJhz-edL1yuHefc8A",
+            13: "https://fsldownload.com/p/qhU5y5n8zDGsGvZ3.H4TGKgoyZzHYUkFSEliS3UdAJlayoBBdneGQGz0cvgmk1uRCCBxaOcuYBcT0UJ9GaCNf1VVMA9jwjK-JeLFITQdvgbutwSP44pTERqfJJ6AhJzZW9UgHtadnv6UatKrHLqT_TD4rExZUZQxVe3jdgP_ZuBHUlzGu73UQe0WwkS21KeP-c6hpFt4jrqRtwUTX2d5jENT6aolVO_PCK3cXOYiS94jBJHh2z7rag1jN2_11aQpjKmCbf4OzutujMTvftV8SL5e95uxUioxTMP96-xqFwKw4M0kAAhJ4ialhOS9y4p2ca8tgzaJaHD5yw9lrbcK2tvnYc87Exd5BVUD2cybWDoAi0K6Q5o5bRtcZSx7v39Ot-OuFIMomMoZGzbhPSdXtQe-kCLs7.I4ZqXIXn-bcF7Smm_0b73A",
+            14: "https://fsldownload.com/p/RNLPgpl_bKBc2Ao2.cygLQ2MsPYq6Zk0Lhb4MAz8DGGPAmrwC3_F-PWu1ZgEqnPO7Lg_3swhGPYjtWFT3Ox1mltb2jDzRAtHKIa04Iwf7vf5JIVwo7sDck5VtGPwJpmCDb_p4_1M8JCA7hPJ5nLpsmChh2Za0UDM2zshyCKYfRuXYZWUPUneNA2uruZW7OJDujzEhL2S9aHQFt2bwbdnKOVLULiBUsXDnbusjJFZTahETy34MHXw-qsPn2gK09mRA2WBsEyxoHjqdqS31TwsXN9iR6YXPX7Z2k8lyA3WDROTwx_Pz2KU0tQgR4kL65q-eITtdKYjCZoNLQVOJQzpw4h0SAvQKvu-pwkMZoAz_Jwf1yEY_j3Fx6huLhPCIWLRhsj_EqHFPzIrjhHgX2lC1kgugwM2Z.021x5SEGxMDvhE-GyVzOfQ",
+            15: "https://fsldownload.com/p/bOAaN1baD3MKYQMQ.uF1zL2mr6DuxMPJRL49Qigy6TmzgIHhEw-9PhPOmgWa2N_wcRvYGUqUpClq1DMg4E9mN1zvZ53oADgtxDBBvBh5UMT9G2nWuXAsa7XrS3Zu1suFZLMFwk66HZz4nP2TLIdGvPjq5BY-8SrHjeOXn4uGJPL-ZvLTef4Mnrg8pdQcmLIw5RlzjznhLp1yTBNiQ0oW-8R5jReSwjrrg5qCgF5XevRh-caFKCl46Iq8cwo9DDh4TbAmQH_C9DYQE6JoeXzWfIZh1WOC4YQIUFp0OcRTC9s4kL-V37coOMnVbST5EIQyfD8OrLONiCBm7qDJypqbi9lmPV8I_R-loXzBeRVYFi2bTEQh3jIkB5FslhlwKd_hGK831jtsTxzGhZPIHFuOW_mKBE_S3.vMY-bnxM-z3kQnQZ2LcfCA",
+            16: "https://fsldownload.com/p/VwNsQb36hPvcydpN.j8vbtQlpl6_pDkBUs52IPCIxoMKqerG-EfZUCCS7ycVWW7TBXzkG5hAeo4eMts0aQNTj9_Y087Z9B-w7viG-Nb8naQwj4povGMmFE5QH9WhAHUIzx6OTpiNwl1eve3dMS8y_Ps6aFdOQlfw0hP-ZhOJ4JF23oAttcrqjjkIB1JIyYYlP_5wuh6XmpSI3UW9DFIF528kI5graB0p6MPTZ8U20LO867S_nqIJKgcVt0Ox8BFWWYrVn183I_855E_xqhRUkwdIVl_iRYnpUy4pVIuqcVtSCcXsfGArFhN2rWtGDKwZuEvJuFYRTKXgLDzZ0rmSz8wM1jxp_yXQHXg_gMgnmD98kub9VugpgBUVqdVfluMz2afjINt0-p_S6nDxuHOyEuqlvEZMa.I-pLgjFp8ZUPUrNLqrQFGA",
+            17: "https://fsldownload.com/p/ssz_RvsZ2L1QBfAI.YI6SGKfnMwPrIVEsq8GtRtl3yuKlDjdO0_0OS-CJM7lwihaHqiX6JtaQcp_jNSDxEvdYHh0L86eWLwmKtmGC9QZsLCySAIszSObxfq0Z-XR5ZwsRSnvp5SSdHvJC01v0c8LWZXe4EOaMqW6HKbueaUSzAaDm7pxVDTMujfB-x39oB5fT-xxEPt2evsPdODIsAanfTvgOXJTw9WmUu2hlowosmILJQuMX7asmERtm_GiUpTqjpa_6FDlHXva-Rsj49NAzzqHip9YZJwM37kCQEp8NECM9YeL0fWRTfa5ME65W_fvrcNqxwTkl-0zAKWD4anMtJj6u6tUWqZ99kIpIPlNSsvv-Z0pTjA-1_PNl2Yx8_yTOOLrC7OGEtVrVMCjabQ66xw3QnkLU.ko0AvmAIOmgBJ9uSJErN2Q",
+            18: "https://fsldownload.com/p/HNIOm27kNAjC9Yi5.e733wLLlRYqvzyMBq5KR95j1btHkddMgPb5hWKtkzNog9Dx7lxh7Vc7INqeLtPTJxHXzUxPd0X5A8a8u1T4OV1sSyNycJh4fgsKFeG5nAHMdRr6_Zs9Ae1b9nTnw6yJeag5vrzQN7m4xd1Op6A6OaO775u8JW10McB7_8TCxEoacaFBl3sAA1uWFqajMEsdM3iOAfK26KMAbijnZRTAjba6LS71B63JPQiGUCE86dhd_hFfRKt1OipCVIgM9J8raiur9BrfZpuFIL45tDDUrmL1EzJRQWWnFzOeW1A3Z2BuD4WnDfg0DLQWJH_4JKHGxZeWEWWBpxFT1CeAB72f6qV7FiHV2ACuC64NErBFfThBkskzF6HflkZjW0MwKZBbXpokdfP4l10qR.0C7JYnnKAXJKsLWvCjnfyg",
+            19: "https://fsldownload.com/p/ib1pE0oOsCokUkb3.OfcRbSA8xc4Gk-dasp_4FYGCilEN5wWh-10amW6rU0zC7k8ixBVg6jVL9aSNkqczqlszaAoKwbZXD31zqrLhCVqZcmJ9-4RqA6dOeBEkJ4iqr6dAEyY3RF31Uq6traT98qlS0XR5rnvDSyEecThY-Hlvt3knSdr3NhUBMw0bOjSWpl9WWuhMT9MOwBJV0hepc6ic4gcsqt64H4cFAIzJWJYt4e0OKtPCkd5SYviLZrQJgeEvUbmsDgpsVguTd4DiMqYfmVlCBjG9JqJfQ6cGgkWkFRtr-OOv-9XvZvrLDyp1KQM5DTrV2quXAnQHTzgdqc-qUWFlJonl5llSkZRNhyvqxSEEz2zON0kK7q-hEiLAiNcJ952Dl0L88grHaBoLiikd3wWC3yu9.UFGn0fbKrO4l4Ys2BQU6Tg",
+            20: "https://fsldownload.com/p/SfjqkuwDfp_vI1A2.SfgxiX-Lot4NjTdngN511Xw11mX7p0nIFgU5rB5iu5VOGERUXacy35_Wczyg3VktCuksPAua2IinAvy0OgWmKuhnJKJsLj_DBe8bgVLFFa9tRv1vkFoSdyh6kVzC3UZCfyPg1FKUH36e8_BRG2OHlKXs7eZoie6DOUGcJCbj_0Gypb5_wEgS51v9JvtzsslPAZm0kwQ6WxJTZ53foGIUXTxl-mdIdW7b0SiY-B7P0PA4HOFM4vEVxsaOmH6awg7cHNDKh_FCknqsDHK5KX2dk-i_Vz1dLKeSwSXiYykXx-G-OaIAbhcyA2w-drlLfA1tnosvRME5IcXjmhcvwJLIIgRCRBmCagVTqFYuVK1g5g4pnw6VmZ3qFw90MHcQbbU_sYGUXhqVTD6j.66k8MXULeqn6aCA-EcDNdQ",
+            21: "https://fsldownload.com/p/BCgCdtEkPMoYX_-l.AKiTPFbsAQeVy2x2xviMiRIJ47uDnrvygTplN0MiT3TY1bnirJdfoPz3KQfR7kYvJAAj3biIjY8HX5TwDf9XwXq_jS70E_Ct4Vk0ILJllNIPcjJSYL1YqlVgKTVf1isY110dMexuOLHIOakgd01qp4MdAkXNe1IbJbCNgcsF_n0iU7A4TjFwsNeKtblM3KxqPJI0NEiZ7zRgZ342giyKFsXXB7Cpk0szkmdo64G3k3bzAKO74UjPnDsNVKgGN9p7E4RulOoiU7KKz9ZtudvfkTF4waCq_cxZY7RDBpHapZRd6khIp2UbAZsDMGa422be6IyvIm8VemfaCoSH2bkzk1PRc4xNQ4vvXCaS6hPYz8lwmMBPtcDtDm3EHCO1mJN1wyCVrPKTXS4o.Qm2D9gzXPTJ-BRUFdx0q7A",
+            22: "https://fsldownload.com/p/3YBvCuzqBZAEdugs.yUmcNWWpE-qBxJxy3GZDLRr6KfBk16GtR38CMNUIXY_ZXbGryiAKGwW1QlWwzJr3TzAjsAsilzUiQ0r5QNuiY1vR5V05a2Yuc7WLugcXdIxs6aM29TN58O9l_gAUX79ORatGjjjTIS12vKJdYkRVgn8S5dTVUhdHT1oVdajEM0bodEUydubx6SH1YkUgLQU8T4-rQpH7Lhs1EiYYocGvkD5oGdwTebGkzhGxdt5RaCYqACZyGmJDSYEhwGfEKN11QiBsxvnM8z7UWmkP5tFx6hfqQH1IvEsvIuRPOjEs_5dRnnch7d5UNts_zM3BqRT9QxhriuNYfTm8eiYgGay2F1ED8-EgCdea0QxhKV-RY4oZ8SS4To33Rl5CdyYdXhqn6hMXdPfV66gD.dz30NqAi2lDGogNqCc3xpg",
+            23: "https://fsldownload.com/p/9KoTJmGXpRAgICzu.p6pODBVjHgvVNAMFxdV_RenwztoOn9T4Tyew7xiUXvB-h6_GfCN_Yf4icWKhu_y6DXncUUl4MM1EsPXHy83Ux8YHM3icSGoeLckq5n81zWAS_R9LiBTInhzAdLr1rwVIMILTsmk8GGPodH6ukNDfdYiGzziVM3g5IA1I8i2XTylHBNUrPmV8Ma2LJXqrCJ-Uc4HcqEo_FTNq3JR7kF_aC8Yy6_ZACvfBKOEKeKDLxO_38k1-fOP10X-E1W6v5zGROULuOAc3Jr9vTocYtK3JQ0z4PGg8Df2sJ9BDCgX8HLHB5Vo4S6s0coDkT1tkmrt3SHrWvc98XkVfH5cQh2EvU2yzl2DeHMEPxg4CwrEJWXBUL5yhVoivTncqP3WYL07Prl2Tdl_Vwr72.qXLilmEp-smxcj3fO1zTmA"
+        };
+
+        const episodeTitlesS1 = {
+            1: "Pilot", 2: "Red Hair and Silver Tape", 3: "White Wine", 4: "Ladies in Red", 5: "Claret, White and Red",
+            6: "Red-Handed", 7: "Seeing Red", 8: "The Thin Red Line", 9: "Flame Red", 10: "Red Brick and Ivy",
+            11: "Red John's Friends", 12: "Red Rum", 13: "Paint It Red", 14: "Crimson Casanova", 15: "Scarlett Fever",
+            16: "Bloodshot", 17: "Carnelian, Inc.", 18: "Russet Port", 19: "A Dozen Red Herrings", 20: "Red Sauce",
+            21: "Miss Red", 22: "Blue Bird", 23: "Red John's Footsteps"
+        };
+
+        const seasonDescriptions = {
+            1: { title: "Season 1", subtitle: "23 Episodes • Fully Unlocked", desc: "Patrick Jane joins the California Bureau of Investigation as a consultant, using his exceptional mentalist skills to solve brutal homicides while hunting for Red John." },
+            2: { title: "Season 2", subtitle: "23 Episodes • Coming Soon", desc: "The CBI team dives deeper into complex cases as Jane's unorthodox methods continue to ruffle feathers and outsmart culprits." },
+            3: { title: "Season 3", subtitle: "24 Episodes • Coming Soon", desc: "Jane closes in on high-ranking members of Red John's inner circle, leading to a stunning and unforgettable confrontation." },
+            4: { title: "Season 4", subtitle: "24 Episodes • Coming Soon", desc: "The aftermath of Jane's dramatic actions forces him to navigate new legal and psychological hurdles within the bureau." },
+            5: { title: "Season 5", subtitle: "22 Episodes • Coming Soon", desc: "The search for Red John intensifies as the list of suspects narrows down to a final few individuals." },
+            6: { title: "Season 6", subtitle: "22 Episodes • Coming Soon", desc: "A monumental chapter in CBI history that changes Patrick Jane's destiny and opens a brand new professional era." },
+            7: { title: "Season 7", subtitle: "13 Episodes • Coming Soon", desc: "The thrilling final season exploring high-stakes federal operations and a deeply personal future for Patrick Jane." }
+        };
+
+        const mentalistQuotes = [
+            "I don't believe in psychics. I believe in sharp observation and profound psychological insight.",
+            "There is nothing more dangerous than a humiliated ego.",
+            "People lie with their words, but their body language tells the absolute truth.",
+            "Curiosity is the engine of the human mind.",
+            "When you have eliminated the impossible, whatever remains, however improbable, must be the truth."
+        ];
+
+        let currentSeason = 1;
+        let watchlist = JSON.parse(localStorage.getItem('mentalist_watchlist') || '[]');
+
+        function init() {
+            renderSeasonsNav();
+            renderSeasonContent();
+            updateWatchlistCount();
+        }
+
+        function switchTab(tabId) {
+            document.getElementById('tab-browse').classList.add('hidden');
+            document.getElementById('tab-watchlist').classList.add('hidden');
+            document.getElementById('tab-tea').classList.add('hidden');
+
+            document.getElementById('nav-browse').className = "text-sm font-medium text-mentalist-muted transition hover:text-white flex items-center gap-2";
+            document.getElementById('nav-watchlist').className = "text-sm font-medium text-mentalist-muted transition hover:text-white flex items-center gap-2";
+            document.getElementById('nav-tea').className = "text-sm font-medium text-mentalist-muted transition hover:text-white flex items-center gap-2";
+
+            if (tabId === 'browse') {
+                document.getElementById('tab-browse').classList.remove('hidden');
+                document.getElementById('nav-browse').className = "text-sm font-medium text-mentalist-gold transition hover:text-mentalist-goldHover flex items-center gap-2";
+            } else if (tabId === 'watchlist') {
+                document.getElementById('tab-watchlist').classList.remove('hidden');
+                document.getElementById('nav-watchlist').className = "text-sm font-medium text-mentalist-gold transition hover:text-mentalist-goldHover flex items-center gap-2";
+                renderWatchlist();
+            } else if (tabId === 'tea') {
+                document.getElementById('tab-tea').classList.remove('hidden');
+                document.getElementById('nav-tea').className = "text-sm font-medium text-mentalist-gold transition hover:text-mentalist-goldHover flex items-center gap-2";
+            }
+        }
+
+        function renderSeasonsNav() {
+            const container = document.getElementById('seasons-anchor');
+            let html = '';
+            for (let s = 1; s <= 7; s++) {
+                const isActive = s === currentSeason;
+                html += `
+                    <button onclick="selectSeason(${s})" class="px-5 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition border ${
+                        isActive 
+                        ? 'bg-mentalist-gold text-black border-mentalist-gold font-semibold shadow-lg' 
+                        : 'bg-mentalist-card text-mentalist-muted border-mentalist-border hover:border-mentalist-gold/50 hover:text-white'
+                    }">
+                        Season ${s} ${s === 1 ? '(Unlocked)' : '🔒'}
+                    </button>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function selectSeason(seasonNum) {
+            currentSeason = seasonNum;
+            renderSeasonsNav();
+            renderSeasonContent();
+        }
+
+        function renderSeasonContent() {
+            const headerContainer = document.getElementById('season-header');
+            const gridContainer = document.getElementById('episode-grid');
+            const info = seasonDescriptions[currentSeason];
+
+            headerContainer.innerHTML = `
+                <div>
+                    <h3 class="text-2xl font-serif font-bold text-white">${info.title}</h3>
+                    <p class="text-xs text-mentalist-gold uppercase tracking-wider font-semibold mt-1">${info.subtitle}</p>
+                    <p class="text-sm text-mentalist-muted mt-2 max-w-2xl">${info.desc}</p>
+                </div>
+                ${currentSeason === 1 ? `
+                    <div class="mt-4 md:mt-0">
+                        <button onclick="playEpisode(1, 1)" class="bg-mentalist-gold text-black font-semibold px-5 py-2.5 rounded-xl hover:bg-mentalist-goldHover transition text-xs flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i> Play Episode 1
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+
+            if (currentSeason === 1) {
+                let cardsHtml = '';
+                for (let ep = 1; ep <= 23; ep++) {
+                    const title = episodeTitlesS1[ep] || `Episode ${ep}`;
+                    const isBookmarked = watchlist.some(item => item.season === 1 && item.episode === ep);
+                    cardsHtml += `
+                        <div class="bg-mentalist-card border border-mentalist-border rounded-xl overflow-hidden card-hover group flex flex-col justify-between">
+                            <div class="relative aspect-video bg-mentalist-dark flex items-center justify-center overflow-hidden">
+                                <img src="https://placehold.co/600x338/12141c/d4af37?text=S1+E${ep}" alt="Episode ${ep}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-80" onerror="this.src='https://placehold.co/600x338/12141c/d4af37?text=The+Mentalist'">
+                                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+                                    <button onclick="playEpisode(1, ${ep})" class="w-12 h-12 rounded-full bg-mentalist-gold text-black flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition">
+                                        <i class="fa-solid fa-play ml-0.5"></i>
+                                    </button>
+                                </div>
+                                <span class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-xs px-2.5 py-1 rounded-md text-mentalist-gold border border-mentalist-border font-mono">
+                                    S1:E${ep}
+                                </span>
+                                <button onclick="toggleWatchlist(1, ${ep}, '${title.replace(/'/g, "\\'")}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/70 backdrop-blur-md text-xs flex items-center justify-center ${isBookmarked ? 'text-mentalist-gold' : 'text-mentalist-muted hover:text-white'} border border-mentalist-border transition">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                </button>
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <h4 class="font-serif font-bold text-white text-base group-hover:text-mentalist-gold transition truncate">
+                                    ${ep}. ${title}
+                                </h4>
+                                <p class="text-xs text-mentalist-muted line-clamp-2">
+                                    Patrick Jane and CBI agents Teresa Lisbon, Kimball Cho, Wayne Rigsby, and Grace Van Pelt investigate a complex homicide.
+                                </p>
+                            </div>
+                            <div class="px-4 pb-4 pt-0">
+                                <button onclick="playEpisode(1, ${ep})" class="w-full bg-mentalist-dark hover:bg-mentalist-gold hover:text-black border border-mentalist-border text-mentalist-gold py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-play text-[10px]"></i> Stream Episode
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                gridContainer.innerHTML = cardsHtml;
+            } else {
+                // Locked / Coming Soon State for Seasons 2-7
+                gridContainer.innerHTML = `
+                    <div class="col-span-full py-20 text-center space-y-6 bg-mentalist-card border border-mentalist-border rounded-2xl">
+                        <div class="w-20 h-20 mx-auto rounded-full bg-mentalist-dark border border-mentalist-gold/40 flex items-center justify-center text-3xl text-mentalist-gold shadow-xl">
+                            🔒
+                        </div>
+                        <div class="space-y-2 max-w-md mx-auto">
+                            <h3 class="text-2xl font-serif font-bold text-white">Season ${currentSeason} is Encrypted & Coming Soon</h3>
+                            <p class="text-xs text-mentalist-muted">
+                                CBI archives for this season are currently locked in Red John's secure files. Check back soon for full episodes and streaming feeds.
+                            </p>
+                        </div>
+                        <button onclick="selectSeason(1)" class="bg-mentalist-gold text-black font-semibold px-6 py-2.5 rounded-xl text-xs hover:bg-mentalist-goldHover transition shadow-lg">
+                            Return to Season 1 (Unlocked)
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Custom Player Logic
+        function playEpisode(season, episode) {
+            if (season !== 1) {
+                alert("This season is currently locked.");
+                return;
+            }
+            const url = season1Links[episode];
+            const title = episodeTitlesS1[episode] || `Episode ${episode}`;
+
+            document.getElementById('player-ep-title`'.replace('`','')).innerText = `${episode}. ${title}`;
+            document.getElementById('player-ep-subtitle').innerText = `Season 1 • Episode ${episode} of 23`;
+            
+            const modal = document.getElementById('player-modal');
+            const loader = document.getElementById('player-loader');
+            const iframe = document.getElementById('video-frame');
+
+            modal.classList.remove('hidden');
+            loader.style.display = 'flex';
+            iframe.src = '';
+
+            // Random loader quote
+            document.getElementById('loader-quote').innerText = mentalistQuotes[Math.floor(Math.random() * mentalistQuotes.length)];
+
+            // Simulate slight secure handshake loading
+            setTimeout(() => {
+                iframe.src = url;
+                loader.style.display = 'none';
+            }, 1200);
+
+            renderDrawerList(episode);
+        }
+
+        function closePlayer() {
+            const modal = document.getElementById('player-modal');
+            const iframe = document.getElementById('video-frame');
+            iframe.src = '';
+            modal.classList.add('hidden');
+        }
+
+        function toggleDrawer() {
+            const drawer = document.getElementById('playlist-drawer');
+            drawer.classList.toggle('translate-x-full');
+        }
+
+        function renderDrawerList(currentEp) {
+            const container = document.getElementById('drawer-ep-list');
+            let html = '';
+            for (let ep = 1; ep <= 23; ep++) {
+                const title = episodeTitlesS1[ep];
+                const isCurrent = ep === currentEp;
+                html += `
+                    <div onclick="playEpisode(1, ${ep})" class="p-3 rounded-xl cursor-pointer border transition flex items-center justify-between ${
+                        isCurrent 
+                        ? 'bg-mentalist-gold/10 border-mentalist-gold text-white' 
+                        : 'bg-mentalist-dark border-mentalist-border hover:border-mentalist-gold/40 text-mentalist-muted hover:text-white'
+                    }">
+                        <div class="flex items-center gap-3">
+                            <span class="font-mono text-xs text-mentalist-gold font-bold">E${ep}</span>
+                            <span class="text-xs font-medium truncate max-w-[150px]">${title}</span>
+                        </div>
+                        ${isCurrent ? '<i class="fa-solid fa-play text-xs text-mentalist-gold"></i>' : ''}
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // Watchlist Functionality
+        function toggleWatchlist(season, episode, title) {
+            const index = watchlist.findIndex(item => item.season === season && item.episode === episode);
+            if (index > -1) {
+                watchlist.splice(index, 1);
+            } else {
+                watchlist.push({ season, episode, title });
+            }
+            localStorage.setItem('mentalist_watchlist', JSON.stringify(watchlist));
+            updateWatchlistCount();
+            renderSeasonContent();
+            if(!document.getElementById('tab-watchlist').classList.contains('hidden')) {
+                renderWatchlist();
+            }
+        }
+
+        function updateWatchlistCount() {
+            document.getElementById('watchlist-count').innerText = watchlist.length;
+        }
+
+        function renderWatchlist() {
+            const container = document.getElementById('watchlist-grid');
+            if (watchlist.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-16 text-center space-y-4">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-mentalist-card border border-mentalist-border flex items-center justify-center text-2xl text-mentalist-muted">
+                            🔖
+                        </div>
+                        <p class="text-sm text-mentalist-muted">Your watchlist is currently empty. Bookmark episodes while browsing Season 1.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            watchlist.forEach(item => {
+                html += `
+                    <div class="bg-mentalist-card border border-mentalist-border rounded-xl overflow-hidden card-hover group flex flex-col justify-between">
+                        <div class="relative aspect-video bg-mentalist-dark flex items-center justify-center overflow-hidden">
+                            <img src="https://placehold.co/600x338/12141c/d4af37?text=S${item.season}+E${item.episode}" alt="Episode ${item.episode}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-80">
+                            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+                                <button onclick="playEpisode(${item.season}, ${item.episode})" class="w-12 h-12 rounded-full bg-mentalist-gold text-black flex items-center justify-center shadow-xl">
+                                    <i class="fa-solid fa-play ml-0.5"></i>
+                                </button>
+                            </div>
+                            <span class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-xs px-2.5 py-1 rounded-md text-mentalist-gold border border-mentalist-border font-mono">
+                                S${item.season}:E${item.episode}
+                            </span>
+                            <button onclick="toggleWatchlist(${item.season}, ${item.episode}, '${item.title.replace(/'/g, "\\'")}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/70 backdrop-blur-md text-xs flex items-center justify-center text-mentalist-gold border border-mentalist-border transition">
+                                <i class="fa-solid fa-bookmark"></i>
+                            </button>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            <h4 class="font-serif font-bold text-white text-base group-hover:text-mentalist-gold transition truncate">
+                                ${item.episode}. ${item.title}
+                            </h4>
+                            <p class="text-xs text-mentalist-muted">Season ${item.season} Case File</p>
+                        </div>
+                        <div class="px-4 pb-4 pt-0">
+                            <button onclick="playEpisode(${item.season}, ${item.episode})" class="w-full bg-mentalist-dark hover:bg-mentalist-gold hover:text-black border border-mentalist-border text-mentalist-gold py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-play text-[10px]"></i> Stream Now
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Search feature
+        function handleSearch(query) {
+            if (currentSeason !== 1) return;
+            const q = query.toLowerCase();
+            const gridContainer = document.getElementById('episode-grid');
+            let cardsHtml = '';
+            let foundCount = 0;
+
+            for (let ep = 1; ep <= 23; ep++) {
+                const title = episodeTitlesS1[ep] || `Episode ${ep}`;
+                if (title.toLowerCase().includes(q) || ep.toString() === q) {
+                    foundCount++;
+                    const isBookmarked = watchlist.some(item => item.season === 1 && item.episode === ep);
+                    cardsHtml += `
+                        <div class="bg-mentalist-card border border-mentalist-border rounded-xl overflow-hidden card-hover group flex flex-col justify-between">
+                            <div class="relative aspect-video bg-mentalist-dark flex items-center justify-center overflow-hidden">
+                                <img src="https://placehold.co/600x338/12141c/d4af37?text=S1+E${ep}" alt="Episode ${ep}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-80">
+                                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition flex items-center justify-center">
+                                    <button onclick="playEpisode(1, ${ep})" class="w-12 h-12 rounded-full bg-mentalist-gold text-black flex items-center justify-center shadow-xl">
+                                        <i class="fa-solid fa-play ml-0.5"></i>
+                                    </button>
+                                </div>
+                                <span class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-xs px-2.5 py-1 rounded-md text-mentalist-gold border border-mentalist-border font-mono">
+                                    S1:E${ep}
+                                </span>
+                                <button onclick="toggleWatchlist(1, ${ep}, '${title.replace(/'/g, "\\'")}')" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/70 backdrop-blur-md text-xs flex items-center justify-center ${isBookmarked ? 'text-mentalist-gold' : 'text-mentalist-muted hover:text-white'} border border-mentalist-border transition">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                </button>
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <h4 class="font-serif font-bold text-white text-base group-hover:text-mentalist-gold transition truncate">
+                                    ${ep}. ${title}
+                                </h4>
+                                <p class="text-xs text-mentalist-muted line-clamp-2">
+                                    Patrick Jane and CBI agents investigate a complex homicide.
+                                </p>
+                            </div>
+                            <div class="px-4 pb-4 pt-0">
+                                <button onclick="playEpisode(1, ${ep})" class="w-full bg-mentalist-dark hover:bg-mentalist-gold hover:text-black border border-mentalist-border text-mentalist-gold py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-play text-[10px]"></i> Stream Episode
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            gridContainer.innerHTML = foundCount > 0 ? cardsHtml : `<div class="col-span-full py-12 text-center text-mentalist-muted text-sm">No matching episodes found in Season 1.</div>`;
+        }
+
+        function openRandomEpisode() {
+            const randomEp = Math.floor(Math.random() * 23) + 1;
+            playEpisode(1, randomEp);
+        }
+
+        function scrollToSeasons() {
+            document.getElementById('seasons-anchor').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function nextQuote() {
+            const quoteBox = document.getElementById('quote-box');
+            const randomQuote = mentalistQuotes[Math.floor(Math.random() * mentalistQuotes.length)];
+            quoteBox.innerText = `"${randomQuote}"`;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
